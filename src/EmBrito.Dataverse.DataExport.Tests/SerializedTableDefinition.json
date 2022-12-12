@@ -1,0 +1,119 @@
+{
+  "Name": "new_testentity",
+  "PrimaryIdAttribute": "new_uniqueidentifierattribute",
+  "ChangeTrackingEnabled": false,
+  "Columns": [
+    {
+      "Name": "new_bigintattribute",
+      "TypeName": "bigint",
+      "MaxLength": 8,
+      "Precision": 19,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_booleanattribute",
+      "TypeName": "bit",
+      "MaxLength": 1,
+      "Precision": 1,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_datatimeattribute",
+      "TypeName": "datetime",
+      "MaxLength": 8,
+      "Precision": 23,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_decimalattribute",
+      "TypeName": "decimal",
+      "MaxLength": 9,
+      "Precision": 38,
+      "Scale": 4,
+      "Indexed": false
+    },
+    {
+      "Name": "new_doubleattribute",
+      "TypeName": "float",
+      "MaxLength": 8,
+      "Precision": 53,
+      "Scale": 6,
+      "Indexed": false
+    },
+    {
+      "Name": "new_entitynameattribute",
+      "TypeName": "nvarchar",
+      "MaxLength": 256,
+      "Precision": 0,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_integerattribute",
+      "TypeName": "int",
+      "MaxLength": 4,
+      "Precision": 10,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_lookupattribute",
+      "TypeName": "uniqueidentifier",
+      "MaxLength": 16,
+      "Precision": 0,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_memoattribute",
+      "TypeName": "nvarchar",
+      "MaxLength": -1,
+      "Precision": 0,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_moneyattribute",
+      "TypeName": "money",
+      "MaxLength": 17,
+      "Precision": 19,
+      "Scale": 3,
+      "Indexed": false
+    },
+    {
+      "Name": "new_multiselectpicklistattribute",
+      "TypeName": "nvarchar",
+      "MaxLength": 3000,
+      "Precision": 0,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_picklistattribute",
+      "TypeName": "int",
+      "MaxLength": 4,
+      "Precision": 10,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_stringattribute",
+      "TypeName": "nvarchar",
+      "MaxLength": 300,
+      "Precision": 0,
+      "Scale": 0,
+      "Indexed": false
+    },
+    {
+      "Name": "new_uniqueidentifierattribute",
+      "TypeName": "uniqueidentifier",
+      "MaxLength": 16,
+      "Precision": 0,
+      "Scale": 0,
+      "Indexed": false
+    }
+  ]
+}

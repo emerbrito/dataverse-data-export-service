@@ -1,0 +1,9 @@
+{
+  "AppId": "70a39bc6-48ab-4fdc-883b-3b3bab0d2e47",
+  "AppSecret": "H1Z8Q~-3fdpfQKIQNIUcsEpYj58tqkyStl3LjalT",
+  "DataverseInstanceUrl": "https://ebrito.crm.dynamics.com",
+  "SqlCommandTimeoutSeconds": 3600,
+  "ConnectionStrings": {
+    "SqlDbConnectionString": "Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;"
+  }
+}

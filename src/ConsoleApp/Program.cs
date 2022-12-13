@@ -1,5 +1,6 @@
 ﻿
 using ConsoleApp;
+using EmBrito.Dataverse.DataExport.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.PowerPlatform.Dataverse.Client.Model;
 using System;
+using System.Configuration;
 
 // Optimize Connection settings for the ServiceClient
 System.Net.ServicePointManager.DefaultConnectionLimit = 65000;
@@ -16,7 +18,7 @@ System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
 // Build a config object
 IConfiguration config = new ConfigurationBuilder()
-    .AddUserSecrets(typeof(Program).Assembly)
+    .AddUserSecrets(typeof(Program).Assembly, optional: true)
     .AddJsonFile("settings.json", optional: true)
     .AddJsonFile("local.settings.json", optional: true)    
     .AddEnvironmentVariables()
@@ -25,9 +27,15 @@ IConfiguration config = new ConfigurationBuilder()
 // instantiate logger
 ServiceProvider serviceProvider = new ServiceCollection()
     .AddLogging((loggingBuilder) => loggingBuilder
-        .SetMinimumLevel(LogLevel.Information)
+        .SetMinimumLevel(LogLevel.Trace)
         .AddConsole()
         )
+    .AddOptions()
+    .Configure<ApplicationOptions>(opt => 
+    {
+        config.Bind(opt);
+        opt.SqlDbConnectionString = config.GetConnectionString("SqlDbConnectionString")!;
+    })
     .BuildServiceProvider();
 
 var logger = serviceProvider.GetService<ILoggerFactory>()!.CreateLogger<Program>();
@@ -46,7 +54,7 @@ using (ServiceClient client = new ServiceClient(connectionOptions))
     Console.WriteLine("");
     Console.WriteLine($"Connected to: {client.ConnectedOrgFriendlyName}");
     Console.WriteLine($"Executing...");
-
+    
     var des = new DataExport(client, config, logger);
     await des.Start();
 }

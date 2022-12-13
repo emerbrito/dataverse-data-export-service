@@ -6,6 +6,7 @@ using EmBrito.Dataverse.DataExport.Sql.Sql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,19 +15,19 @@ using System.Threading.Tasks;
 
 namespace EmBrito.Dataverse.DataExport.Core
 {
-    public class DataExportSettings
+    public class DataStoreService
     {
 
         DataContext dataContext;
         ILogger logger;
 
-        public DataExportSettings(DataContext dataContext, ILogger logger)
+        public DataStoreService(DataContext dataContext, ILogger logger)
         {
             this.dataContext = dataContext ?? throw new ArgumentNullException(nameof(dataContext));
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));            
         }
 
-        public async Task AddActivity(string description, string tableName, Guid jobId, bool isError)
+        public async Task LogActivity(string description, string tableName, Guid jobId, bool isError)
         {
             var table = await GetTableByName(tableName);
             var job = await GetJobById(jobId);
@@ -59,7 +60,7 @@ namespace EmBrito.Dataverse.DataExport.Core
             await dataContext.SaveChangesAsync();
         }
 
-        public async Task<TableSetting> EnableChangeTracking(string tableName)
+        public async Task<TableSetting> SetChangeTrackingEnabled(string tableName)
         {
             var table = await GetTableByName(tableName);
 

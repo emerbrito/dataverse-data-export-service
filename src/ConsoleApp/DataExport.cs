@@ -7,6 +7,7 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
@@ -37,7 +38,7 @@ namespace ConsoleApp
 
             // Added through dependency injection
             var dbContext = new DataContext("Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;", 3600);
-            var settings = new DataExportSettings(dbContext, log);
+            var settings = new DataStoreService(dbContext, log);
             var metadataService = new DataverseMetadataService(client);
 
             // Create database or tables if database does not exist or is empty.
@@ -73,7 +74,7 @@ namespace ConsoleApp
 
                     try
                     {
-                        await settings.AddActivity(msg, tableSetting.LogicalName, jobId, isError: true);
+                        await settings.LogActivity(msg, tableSetting.LogicalName, jobId, isError: true);
                     }
                     catch (Exception)
                     {
@@ -86,7 +87,7 @@ namespace ConsoleApp
 
         }
 
-        async Task<bool> ProcessTableSchema(TableSetting tableSetting, Guid jobId, TableSettingCollection tableSettings, DataExportSettings settings, DataverseMetadataService metadataService, IEnumerable<Predicate<AttributeMetadata>> attributeFilters)
+        async Task<bool> ProcessTableSchema(TableSetting tableSetting, Guid jobId, TableSettingCollection tableSettings, DataStoreService storeService, DataverseMetadataService metadataService, IEnumerable<Predicate<AttributeMetadata>> attributeFilters)
         {
 
             log.LogInformation($"Processing table {tableSetting.LogicalName}.");
@@ -134,13 +135,13 @@ namespace ConsoleApp
             if (changes.HasChanges)
             {
                 log.LogInformation($"Table {tableSetting.LogicalName} has changed.");
-                var failedTables = await ApplySchemaChanges(changes, jobId, tableSetting, settings);
+                var failedTables = await ApplySchemaChanges(changes, jobId, tableSetting, storeService);
                 success= failedTables.Count == 0;
             }
             else
             {
                 log.LogInformation($"No Changes found for table {tableSetting.LogicalName}.");
-                await settings.AddActivity($"No schema changes. Table name: {tableSetting.LogicalName}", tableSetting.LogicalName, jobId, isError: false);
+                await storeService.LogActivity($"No schema changes. Table name: {tableSetting.LogicalName}", tableSetting.LogicalName, jobId, isError: false);
             }
 
             // check and enable change tracking
@@ -148,7 +149,7 @@ namespace ConsoleApp
             {
                 try
                 {
-                    await EnsureChangeTrackEnabled(metadata, metadataService, localDefinitions, settings);
+                    await EnsureChangeTrackEnabled(metadata, metadataService, localDefinitions, storeService);
                 }
                 catch (Exception ex)
                 {
@@ -158,7 +159,7 @@ namespace ConsoleApp
 
                     try
                     {
-                        await settings.AddActivity(msg, tableSetting.LogicalName, jobId, isError: true);
+                        await storeService.LogActivity(msg, tableSetting.LogicalName, jobId, isError: true);
                     }
                     catch (Exception)
                     {
@@ -170,7 +171,7 @@ namespace ConsoleApp
             return success;       
         }
 
-        async Task<List<string>> ApplySchemaChanges(SchemaComparer changes, Guid jobId, TableSetting tableSetting, DataExportSettings settings)
+        async Task<List<string>> ApplySchemaChanges(SchemaComparer changes, Guid jobId, TableSetting tableSetting, DataStoreService storeService)
         {
             var builder = new SqlScriptBuilder();
             var failedTables = new List<string>();
@@ -180,14 +181,14 @@ namespace ConsoleApp
                 try
                 {
                     var script = builder.CreateTable(table);
-                    await settings.ExecuteSchemaUpdateScript(script, jobId);
+                    await storeService.ExecuteSchemaUpdateScript(script, jobId);
                 }
                 catch (Exception ex)
                 {
                     failedTables.Add(table.Name);
                     var msg = $"Unable to generate create table script for table {table.Name}";
                     log.LogError(ex, msg);
-                    await LogScriptGenerationError(msg, table.Name, jobId, settings);                    
+                    await LogScriptGenerationError(msg, table.Name, jobId, storeService);                    
                 }
             }
 
@@ -197,14 +198,14 @@ namespace ConsoleApp
                 try
                 {
                     var script = builder.DropTable(table);
-                    await settings.ExecuteSchemaUpdateScript(script, jobId);
+                    await storeService.ExecuteSchemaUpdateScript(script, jobId);
                 }
                 catch (Exception ex)
                 {
                     failedTables.Add(table.Name);
                     var msg = $"Unable to generate drop table script for table {table.Name}";
                     log.LogError(ex, msg);
-                    await LogScriptGenerationError(msg, table.Name, jobId, settings);
+                    await LogScriptGenerationError(msg, table.Name, jobId, storeService);
                 }
 
             }
@@ -214,26 +215,26 @@ namespace ConsoleApp
                 try
                 {
                     var script = builder.AlterTable(change);
-                    await settings.ExecuteSchemaUpdateScript(script, jobId);
+                    await storeService.ExecuteSchemaUpdateScript(script, jobId);
                 }
                 catch (Exception ex)
                 {
                     failedTables.Add(change.LogicalName);
                     var msg = $"Unable to generate alter table script for table {change.LogicalName}";
                     log.LogError(ex, msg);
-                    await LogScriptGenerationError(msg, change.LogicalName, jobId, settings);
+                    await LogScriptGenerationError(msg, change.LogicalName, jobId, storeService);
                 }
             }
 
             return failedTables;
         }
 
-        async Task LogScriptGenerationError(string message, string tableName, Guid jobId, DataExportSettings settings)
+        async Task LogScriptGenerationError(string message, string tableName, Guid jobId, DataStoreService storeService)
         {
-            await settings.AddActivity(message, tableName, jobId, isError: true);
+            await storeService.LogActivity(message, tableName, jobId, isError: true);
         }
 
-        async Task EnsureChangeTrackEnabled(EntityMetadata metadata, DataverseMetadataService metadataService, TableDefinitionCollection localDefinitions, DataExportSettings settings)
+        async Task EnsureChangeTrackEnabled(EntityMetadata metadata, DataverseMetadataService metadataService, TableDefinitionCollection localDefinitions, DataStoreService storeService)
         {
             log.LogInformation($"Checking change tracking status for table {metadata.LogicalName}.");
             var tableName = metadata.LogicalName;
@@ -253,7 +254,7 @@ namespace ConsoleApp
                 if (localDefinitions.Contains(tableName) && !localDefinitions[tableName].ChangeTrackingEnabled)
                 {
                     log.LogInformation($"Updating local settings for table {metadata.LogicalName} with new change tracking status. Enabled: {metadata.ChangeTrackingEnabled.Value}.");
-                    await settings.EnableChangeTracking(tableName);
+                    await storeService.SetChangeTrackingEnabled(tableName);
                 }
             }
         }

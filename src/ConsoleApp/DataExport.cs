@@ -13,9 +13,11 @@ using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace ConsoleApp
 {
@@ -58,33 +60,47 @@ namespace ConsoleApp
             // start job
             jobId = await settings.StartJob();
 
-            // process each table
-            for (int i = 0; i < tableSettings.Count; i++)
+            // process each table in parallel
+
+            var blockOptions = new ExecutionDataflowBlockOptions
             {
-                var tableSetting = tableSettings[i];
+                EnsureOrdered = false,
+                MaxDegreeOfParallelism = client.RecommendedDegreesOfParallelism
+            };
+            var parallelBlock = new ActionBlock<TableSetting>(async ts =>
+            {
+
+                var dbc = new DataContext("Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;", 3600);
+                var storeSvc = new DataStoreService(dbc, log);
 
                 try
                 {
-                    var success = await ProcessTableSchema(tableSetting, jobId, tableSettings, settings, metadataService, attributeFilters);
+                    var success = await ProcessTableSchema(ts, jobId, tableSettings, storeSvc, metadataService, attributeFilters);
                 }
                 catch (Exception ex)
                 {
-                    var msg = $"Unexpected error processing table {tableSetting.LogicalName}. {ex.Message}";
+                    var msg = $"Unexpected error processing table {ts.LogicalName}. {ex.Message}";
                     log.LogError(ex, msg);
 
                     try
                     {
-                        await settings.LogActivity(msg, tableSetting.LogicalName, jobId, isError: true);
+                        await settings.LogActivity(msg, ts.LogicalName, jobId, isError: true);
                     }
                     catch (Exception)
                     {
                     }
                 }
 
+            }, blockOptions);
+
+            foreach (var tableSetting in tableSettings)
+            {
+                parallelBlock.Post(tableSetting);
             }
 
+            parallelBlock.Complete();
+            await parallelBlock.Completion;
             await settings.CompleteJob(jobId);
-
         }
 
         async Task<bool> ProcessTableSchema(TableSetting tableSetting, Guid jobId, TableSettingCollection tableSettings, DataStoreService storeService, DataverseMetadataService metadataService, IEnumerable<Predicate<AttributeMetadata>> attributeFilters)

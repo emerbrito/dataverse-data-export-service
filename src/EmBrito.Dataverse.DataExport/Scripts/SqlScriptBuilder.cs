@@ -14,14 +14,16 @@ namespace EmBrito.Dataverse.DataExport.Scripts
         public const string ScriptTypeAlterTable = "Alter";
         public const string ScriptTypeDropTable = "Drop";
 
-        public SqlScript CreateTable(TableDefinition tableDefinition)
+        public SqlScript CreateTable(TableDefinition tableDefinition, string? alternativeName = null, bool stagingTable = false)
         {
             var builder = new StringBuilder();
+
+            string tableName = alternativeName ?? tableDefinition.Name;
 
             // open create table statment
             builder.AppendLine("SET ANSI_NULLS ON");
             builder.AppendLine("SET QUOTED_IDENTIFIER ON");
-            builder.AppendLine($"create table [dbo].[{tableDefinition.Name}](");
+            builder.AppendLine($"create table [dbo].[{tableName}](");
 
             // append columns
 
@@ -31,25 +33,31 @@ namespace EmBrito.Dataverse.DataExport.Scripts
                 builder.AppendLine(",");
             }
 
-            // append primary 
-            builder.AppendLine($"constraint [PK_{tableDefinition.Name}] primary key clustered");
-            builder.AppendLine("  (");
-            builder.Append($"    [{tableDefinition.PrimaryIdAttribute}] ASC");
-            builder.AppendLine();
-            builder.AppendLine("  ) with (pad_index = off, statistics_norecompute = off, ignore_dup_key = off, allow_row_locks = on, allow_page_locks = on)");
+            if(!stagingTable)
+            {
+                // append primary 
+                builder.AppendLine($"constraint [PK_{tableName}] primary key clustered");
+                builder.AppendLine("  (");
+                builder.Append($"    [{tableDefinition.PrimaryIdAttribute}] ASC");
+                builder.AppendLine();
+                builder.AppendLine("  ) with (pad_index = off, statistics_norecompute = off, ignore_dup_key = off, allow_row_locks = on, allow_page_locks = on)");
+            }
 
             // close create statment
             builder.AppendLine(")");
 
-            // append additional indexes
-            foreach (var col in tableDefinition.Columns.Where(c => c.Indexed).ToList())
+            if(!stagingTable)
             {
-                builder.AppendLine($" create nonclustered index IX_{tableDefinition.Name}_{col.Name} on {tableDefinition.Name} (");
-                builder.AppendLine($"   [{col.Name}] ASC");
-                builder.AppendLine($" )");
+                // append additional indexes
+                foreach (var col in tableDefinition.Columns.Where(c => c.Indexed).ToList())
+                {
+                    builder.AppendLine($" create nonclustered index IX_{tableName}_{col.Name} on {tableName} (");
+                    builder.AppendLine($"   [{col.Name}] ASC");
+                    builder.AppendLine($" )");
+                }
             }
 
-            var desc = $"SQL script: Create table. Table name: {tableDefinition.Name}.";
+            var desc = $"SQL script: Create table. Table name: {tableName}.";
             return new SqlScript(ScriptTypeCreateTable, builder.ToString(), tableDefinition, desc);
         }
 

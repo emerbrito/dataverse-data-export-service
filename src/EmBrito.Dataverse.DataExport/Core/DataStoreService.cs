@@ -159,6 +159,12 @@ namespace EmBrito.Dataverse.DataExport.Core
 
         }
 
+        public async Task<TableSetting> GetTableSettingsByName(string logicalName)
+        {
+            var table = await GetTableByName(logicalName, throwIfNotFound: true);
+            return SynchronizedTableToTableSetting(table!);
+        }
+
         public TableSettingCollection GetEnabledTables()
         {
             var tables = dataContext
@@ -172,6 +178,16 @@ namespace EmBrito.Dataverse.DataExport.Core
 
             return collection;
         }
+
+        public async Task SetDataToken(string tableName, string? newToken)
+        {
+            var table = await GetTableByName(tableName);
+            if (table is null) return;
+
+            table.DataToken = newToken;
+            await dataContext.SaveChangesAsync();
+        }
+
 
         ActivityLog BuildActivityLog(string description, SynchronizedTable table, SynchronizationJob job, bool isError)
         {

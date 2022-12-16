@@ -65,26 +65,48 @@ namespace ConsoleApp
             var blockOptions = new ExecutionDataflowBlockOptions
             {
                 EnsureOrdered = false,
-                MaxDegreeOfParallelism = client.RecommendedDegreesOfParallelism
+                MaxDegreeOfParallelism = 1 //client.RecommendedDegreesOfParallelism
             };
-            var parallelBlock = new ActionBlock<TableSetting>(async ts =>
+            var parallelBlock = new ActionBlock<TableSetting>(async tableSetting =>
             {
 
-                var dbc = new DataContext("Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;", 3600);
-                var storeSvc = new DataStoreService(dbc, log);
+                var dataContext = new DataContext("Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;", 3600);
+                var storeService = new DataStoreService(dataContext, log);
+                var success = false;
 
                 try
                 {
-                    var success = await ProcessTableSchema(ts, jobId, tableSettings, storeSvc, metadataService, attributeFilters);
+                    success = await ProcessTableSchema(tableSetting, jobId, tableSettings, storeService, metadataService, attributeFilters);
                 }
                 catch (Exception ex)
                 {
-                    var msg = $"Unexpected error processing table {ts.LogicalName}. {ex.Message}";
+                    var msg = $"Unexpected error handling table schema. Table name: {tableSetting.LogicalName}. {ex.Message}";
                     log.LogError(ex, msg);
 
                     try
                     {
-                        await settings.LogActivity(msg, ts.LogicalName, jobId, isError: true);
+                        await settings.LogActivity(msg, tableSetting.LogicalName, jobId, isError: true);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+
+                if (!success) return;
+
+                try
+                {
+                    var dataService = new DataTransferService(client, dataContext, storeService, log);
+                    await dataService.SyncTable(tableSetting.LogicalName, jobId, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    var msg = $"Unexpected error handling table schema. Table name: {tableSetting.LogicalName}. {ex.Message}";
+                    log.LogError(ex, msg);
+
+                    try
+                    {
+                        await settings.LogActivity(msg, tableSetting.LogicalName, jobId, isError: true);
                     }
                     catch (Exception)
                     {

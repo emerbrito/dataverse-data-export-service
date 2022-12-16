@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace EmBrito.Dataverse.DataExport.Sql.Models
 {
+    [Table("_SynchronizationLogs")]
     public class SynchronizationLog
     {
         public int Id { get; set; }
@@ -20,10 +22,6 @@ namespace EmBrito.Dataverse.DataExport.Sql.Models
         public int NewOrUpdated { get; set; }
 
         public int Removed { get; set; }
-
-        [Required]
-        [MaxLength(150)]
-        public string SchemaQueryType { get; set; } = string.Empty;
 
         public DateTime StartedOn { get; set; }
 

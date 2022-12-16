@@ -16,5 +16,6 @@ namespace EmBrito.Dataverse.DataExport.Core
         public int SqlCommandTimeoutSeconds { get; set; } = 30;
         public int RetryLinearBackoffInitialDelaySeconds { get; set; } = 10;
         public int RetryLinearBackoffRetryCount { get; set; } = 6;
+        public string ScheduleCronExpression { get; set; } = "*/15 * * * *";
     }
 }

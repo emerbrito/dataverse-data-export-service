@@ -5,7 +5,8 @@
   //"DataverseQueryPageSize": 5000,
   //"SqlCommandTimeoutSeconds": 30,
   //"RetryLinearBackoffInitialDelaySeconds": 10,
-  "RetryLinearBackoffRetryCount": 7,
+  //"RetryLinearBackoffRetryCount": 6,
+  "ScheduleCronExpression": "*/15 * * * *",
   "ConnectionStrings": {
     "StoreConnectionString": "Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;"
   }

@@ -27,18 +27,19 @@ IConfiguration config = new ConfigurationBuilder()
 
 // instantiate logger
 ServiceProvider serviceProvider = new ServiceCollection()
+    .AddOptions()
     .AddLogging((loggingBuilder) => loggingBuilder
         .SetMinimumLevel(LogLevel.Trace)
         .AddConsole()
-        )
-    .AddOptions()
+        )    
     .Configure<ApplicationOptions>(opt => 
     {
         config.Bind(opt);
-        opt.SqlDbConnectionString = config.GetConnectionString("SqlDbConnectionString")!;
+        opt.StoreConnectionString = config.GetConnectionString("StoreConnectionString")!;
     })
     .BuildServiceProvider();
 
+var options = serviceProvider.GetService<IOptions<ApplicationOptions>>();
 var logger = serviceProvider.GetService<ILoggerFactory>()!.CreateLogger<Program>();
 
 var connectionOptions = new ConnectionOptions

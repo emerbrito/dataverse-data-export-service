@@ -8,12 +8,13 @@ namespace EmBrito.Dataverse.DataExport.Core
 {
     public class ApplicationOptions
     {
-        public const string SectionName = "Values";
-
-        public string SqlDbConnectionString { get; set; } = string.Empty;
         public string DataverseInstanceUrl { get; set; } = string.Empty;
         public string AppId { get; set; } = string.Empty;
         public string AppSecret { get; set; } = string.Empty;
-        public int SqlCommandTimeoutSeconds { get; set; }
+        public int DataverseQueryPageSize { get; set; } = 5000;
+        public string StoreConnectionString { get; set; } = string.Empty;
+        public int SqlCommandTimeoutSeconds { get; set; } = 30;
+        public int RetryLinearBackoffInitialDelaySeconds { get; set; } = 10;
+        public int RetryLinearBackoffRetryCount { get; set; } = 6;
     }
 }

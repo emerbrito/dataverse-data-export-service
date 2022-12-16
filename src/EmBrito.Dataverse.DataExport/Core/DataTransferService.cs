@@ -33,17 +33,19 @@ namespace EmBrito.Dataverse.DataExport.Core
         ILogger log;
         DataContext dbContext;
         DataStoreService storeService;
+        ApplicationOptions appOptions;
 
         #endregion
 
         #region Constructors
 
-        public DataTransferService(IOrganizationServiceAsync2 client, DataContext dbContext, DataStoreService storeService, ILogger logger)
+        public DataTransferService(IOrganizationServiceAsync2 client, DataContext dbContext, DataStoreService storeService, ApplicationOptions options, ILogger logger)
         {
             this.client = client ?? throw new ArgumentNullException(nameof(client));
-            this.log = logger ?? throw new ArgumentNullException(nameof(logger)); ;
-            this.storeService = storeService ?? throw new ArgumentNullException(nameof(storeService)); ;
-            this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext)); ;
+            this.log = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.storeService = storeService ?? throw new ArgumentNullException(nameof(storeService));
+            this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            this.appOptions = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         #endregion
@@ -427,7 +429,6 @@ namespace EmBrito.Dataverse.DataExport.Core
             string responseToken = string.Empty;
             var upserts = new List<Entity>();
             var removed = new List<EntityReference>();
-            //TODO: Make page size configurable
             var req = new RetrieveEntityChangesRequest
             {
                 Columns = new ColumnSet(true),
@@ -435,14 +436,13 @@ namespace EmBrito.Dataverse.DataExport.Core
                 EntityName = logicalName,
                 PageInfo = new PagingInfo
                 {
-                    Count = 2000,
+                    Count = appOptions.DataverseQueryPageSize,
                     PageNumber = 1,
                     ReturnTotalRecordCount = false
                 }
             };
             var pageCount = 0;
-            //TODO: Make linear back off initial delay and retry count configurable
-            var delay = Backoff.LinearBackoff(TimeSpan.FromMilliseconds(10000), retryCount: 6);
+            var delay = Backoff.LinearBackoff(TimeSpan.FromSeconds(appOptions.RetryLinearBackoffInitialDelaySeconds), retryCount: appOptions.RetryLinearBackoffRetryCount);
 
             var retryPolicy = Policy
                 .Handle<Exception>()

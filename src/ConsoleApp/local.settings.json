@@ -1,6 +1,6 @@
 {
-  "AppId": "70a39bc6-48ab-4fdc-883b-3b3bab0d2e47",
-  "AppSecret": "H1Z8Q~-3fdpfQKIQNIUcsEpYj58tqkyStl3LjalT",
+  "ClientId": "70a39bc6-48ab-4fdc-883b-3b3bab0d2e47",
+  "ClientSecret": "H1Z8Q~-3fdpfQKIQNIUcsEpYj58tqkyStl3LjalT",
   "DataverseInstanceUrl": "https://ebrito.crm.dynamics.com",
   //"DataverseQueryPageSize": 5000,
   //"SqlCommandTimeoutSeconds": 30,

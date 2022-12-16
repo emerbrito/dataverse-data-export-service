@@ -39,16 +39,16 @@ ServiceProvider serviceProvider = new ServiceCollection()
     })
     .BuildServiceProvider();
 
-var options = serviceProvider.GetService<IOptions<ApplicationOptions>>();
+var options = serviceProvider.GetService<IOptions<ApplicationOptions>>()!;
 var logger = serviceProvider.GetService<ILoggerFactory>()!.CreateLogger<Program>();
 
 var connectionOptions = new ConnectionOptions
 {
     AuthenticationType = AuthenticationType.ClientSecret,
-    ClientId = config.GetValue<string>("ClientId"),
-    ClientSecret = config.GetValue<string>("ClientSecret"),
+    ClientId = options.Value.ClientId,
+    ClientSecret = options.Value.ClientSecret,
     Logger = logger,
-    ServiceUri = new Uri("https://ebrito.crm.dynamics.com")
+    ServiceUri = new Uri(options.Value.DataverseInstanceUrl)
 };
 
 using (ServiceClient client = new ServiceClient(connectionOptions))
@@ -60,7 +60,7 @@ using (ServiceClient client = new ServiceClient(connectionOptions))
     var stopWatch = new Stopwatch();
     stopWatch.Start();
 
-    var des = new DataExport(client, config, logger);
+    var des = new DataExport(client, options, logger);
     await des.Start();
 
     stopWatch.Stop();

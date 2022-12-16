@@ -25,21 +25,21 @@ namespace ConsoleApp
     {
 
         private readonly ILogger log;
-        private readonly IConfiguration configuration;
+        private readonly ApplicationOptions appOptions;
         private readonly ServiceClient client;
 
-        public DataExport(ServiceClient client, IConfiguration configuration, ILogger logger)
+        public DataExport(ServiceClient client, IOptions<ApplicationOptions> applicationOptions, ILogger logger)
         {
-            this.log = logger;
-            this.configuration= configuration;
+            this.log = logger;            
             this.client= client;
+            this.appOptions = applicationOptions.Value;
         }
 
         public async Task Start()
         {
 
             // Added through dependency injection
-            var dbContext = new DataContext("Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;", 3600);
+            var dbContext = new DataContext(appOptions.StoreConnectionString, appOptions.SqlCommandTimeoutSeconds);
             var settings = new DataStoreService(dbContext, log);
             var metadataService = new DataverseMetadataService(client);
 
@@ -70,7 +70,7 @@ namespace ConsoleApp
             var parallelBlock = new ActionBlock<TableSetting>(async tableSetting =>
             {
 
-                var dataContext = new DataContext("Server=.;Database=DataExportServiceV2;Trusted_Connection=True;Encrypt=False;", 3600);
+                var dataContext = new DataContext(appOptions.StoreConnectionString, appOptions.SqlCommandTimeoutSeconds);
                 var storeService = new DataStoreService(dataContext, log);
                 var success = false;
 
@@ -96,7 +96,7 @@ namespace ConsoleApp
 
                 try
                 {
-                    var dataService = new DataTransferService(client, dataContext, storeService, log);
+                    var dataService = new DataTransferService(client, dataContext, storeService, appOptions, log);
                     await dataService.SyncTable(tableSetting.LogicalName, jobId, CancellationToken.None);
                 }
                 catch (Exception ex)

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmBrito.Dataverse.DataExpor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmBrito.Dataverse.DataExport", "EmBrito.Dataverse.DataExport\EmBrito.Dataverse.DataExport.csproj", "{17BB9779-D4BC-4FF7-BBA4-61D4F1068873}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "ConsoleApp\ConsoleApp.csproj", "{EA64513D-09AD-4F99-973B-302A09FD9408}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmBrito.FunctionApp.DataExportServices", "EmBrito.FunctionApp.DataExportServices\EmBrito.FunctionApp.DataExportServices.csproj", "{8EEBA95E-DC79-49EA-974B-C6C400195BF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{17BB9779-D4BC-4FF7-BBA4-61D4F1068873}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{17BB9779-D4BC-4FF7-BBA4-61D4F1068873}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17BB9779-D4BC-4FF7-BBA4-61D4F1068873}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EA64513D-09AD-4F99-973B-302A09FD9408}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EA64513D-09AD-4F99-973B-302A09FD9408}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EA64513D-09AD-4F99-973B-302A09FD9408}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EA64513D-09AD-4F99-973B-302A09FD9408}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EEBA95E-DC79-49EA-974B-C6C400195BF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EEBA95E-DC79-49EA-974B-C6C400195BF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EEBA95E-DC79-49EA-974B-C6C400195BF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EEBA95E-DC79-49EA-974B-C6C400195BF9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

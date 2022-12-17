@@ -77,6 +77,7 @@ namespace EmBrito.Dataverse.DataExport.Core
 
                     using (SqlConnection conn = new(dbContext.Database.GetConnectionString()))
                     {
+                        
                         conn.Open();
                         log.LogTrace($"Building empty data tables.");
                         newOrUpdated = BuildEmptyDataTable(tableDefinition.Name, conn);

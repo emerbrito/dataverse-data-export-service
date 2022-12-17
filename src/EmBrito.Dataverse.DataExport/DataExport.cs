@@ -3,40 +3,40 @@ using EmBrito.Dataverse.DataExport.Core;
 using EmBrito.Dataverse.DataExport.Schema;
 using EmBrito.Dataverse.DataExport.Scripts;
 using EmBrito.Dataverse.DataExport.Sql.Sql;
-using Microsoft.Crm.Sdk.Messages;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace ConsoleApp
+namespace EmBrito.Dataverse.DataExport
 {
-    internal class DataExport
+    public class DataExport
     {
 
         private readonly ILogger log;
         private readonly ApplicationOptions appOptions;
         private readonly ServiceClient client;
 
-        public DataExport(ServiceClient client, IOptions<ApplicationOptions> applicationOptions, ILogger logger)
-        {
-            this.log = logger;            
-            this.client= client;
-            this.appOptions = applicationOptions.Value;
+        public DataExport(ServiceClient client, IOptions<ApplicationOptions> applicationOptions, ILogger<DataExport> logger)
+        {            
+            this.client = client ?? throw new ArgumentNullException(nameof(client));
+            this.appOptions = applicationOptions.Value ?? throw new ArgumentNullException(nameof(appOptions));
+            this.log = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task Start()
+        public async Task Start(CancellationToken token)
         {
+
+            if(!client.IsReady)
+            {
+                client.Connect();
+            }            
 
             // Added through dependency injection
             var dbContext = new DataContext(appOptions.StoreConnectionString, appOptions.SqlCommandTimeoutSeconds);
@@ -65,7 +65,8 @@ namespace ConsoleApp
             var blockOptions = new ExecutionDataflowBlockOptions
             {
                 EnsureOrdered = false,
-                MaxDegreeOfParallelism = 1 //client.RecommendedDegreesOfParallelism
+                MaxDegreeOfParallelism = client.RecommendedDegreesOfParallelism, 
+                CancellationToken = token
             };
             var parallelBlock = new ActionBlock<TableSetting>(async tableSetting =>
             {
@@ -97,7 +98,7 @@ namespace ConsoleApp
                 try
                 {
                     var dataService = new DataTransferService(client, dataContext, storeService, appOptions, log);
-                    await dataService.SyncTable(tableSetting.LogicalName, jobId, CancellationToken.None);
+                    await dataService.SyncTable(tableSetting.LogicalName, jobId, token);
                 }
                 catch (Exception ex)
                 {
@@ -134,7 +135,7 @@ namespace ConsoleApp
             TableDefinition? remoteDefinition = null;
             var success = true;
 
-            if(metadata is null)
+            if (metadata is null)
             {
                 log.LogInformation($"Metadata not found for remote table {tableSetting.LogicalName}.");
             }
@@ -143,7 +144,7 @@ namespace ConsoleApp
                 log.LogTrace($"Metadata found. Instantiating table definition builder for {tableSetting.LogicalName}.");
                 var builder = TableDefinitionBuilder.WithMetadata(metadata);
 
-                if(attributeFilters!= null)
+                if (attributeFilters != null)
                 {
                     attributeFilters.ToList().ForEach(f => builder.ExcludeAttributes(f));
                 }
@@ -174,7 +175,7 @@ namespace ConsoleApp
             {
                 log.LogInformation($"Table {tableSetting.LogicalName} has changed.");
                 var failedTables = await ApplySchemaChanges(changes, jobId, tableSetting, storeService);
-                success= failedTables.Count == 0;
+                success = failedTables.Count == 0;
             }
             else
             {
@@ -183,7 +184,7 @@ namespace ConsoleApp
             }
 
             // check and enable change tracking
-            if(metadata != null)
+            if (metadata != null)
             {
                 try
                 {
@@ -191,7 +192,7 @@ namespace ConsoleApp
                 }
                 catch (Exception ex)
                 {
-                    success= false;
+                    success = false;
                     var msg = $"Unexpected error updating change tracking for table {tableSetting.LogicalName}.";
                     log.LogError(ex, msg);
 
@@ -203,10 +204,10 @@ namespace ConsoleApp
                     {
                     }
                 }
-                
+
             }
 
-            return success;       
+            return success;
         }
 
         async Task<List<string>> ApplySchemaChanges(SchemaComparer changes, Guid jobId, TableSetting tableSetting, DataStoreService storeService)
@@ -226,7 +227,7 @@ namespace ConsoleApp
                     failedTables.Add(table.Name);
                     var msg = $"Unable to generate create table script for table {table.Name}";
                     log.LogError(ex, msg);
-                    await LogScriptGenerationError(msg, table.Name, jobId, storeService);                    
+                    await LogScriptGenerationError(msg, table.Name, jobId, storeService);
                 }
             }
 
@@ -296,5 +297,6 @@ namespace ConsoleApp
                 }
             }
         }
+
     }
 }

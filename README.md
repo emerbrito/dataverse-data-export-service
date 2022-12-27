@@ -13,18 +13,20 @@ The service will automatically enable change tracking for the table (entity) bei
 
 ## Azure Function and Consumption Plans
 
-The Azure function implementation uses a timer trigger and the inteval can be set in the app configuration ( details below).
+The Azure function implementation uses a timer trigger and the inteval can be set in the app configuration (details below).
 
 Things to keep in mind if running Azure functions on a consumption plan:
 
 - The function will time out after 10 minutes. You want to keep your timer interval short enough to prevent a synchronization of large volumes of data that might go over 10 minutes.
-- The first time you run the function it may take a while to complete depending on the number of tables being synchronized and volume of data on each table. You may need a "non-consumption" plan to run the initial synchronization, after that you can stop the function and move to a consunption plan.
+- The first time you run the function it may take a while to complete depending on the number of tables being synchronized and volume of data on each table. You may need a "non-consumption" plan to run the initial synchronization and, after that you can stop the function and move to a non-consumption plan. All metadata is stored in the database itself so it is ok to redeploy the function. As long as it is poiting to the same database it will start where the previous left off.
 
-## Configuring the Azure Function
+## Deploying and Configuring the Azure Function
 
-Once the function app is deployed, make sure at least the required configuration keys (see below table) are applied.
+After creating your function app in the azure portal, make sure at least the required configuration keys (see below table) are applied before deploying the function.
 
 For more  information on how to add settings to a function app, visit: [Manage your function app][4]
+
+Once the configuration is in place, clone this repository, deploy the function and it will start working with the specified values.
 
 ### Function App Settings
 
@@ -41,6 +43,14 @@ For more  information on how to add settings to a function app, visit: [Manage y
 | StoreConnectionString | (Required) The SQL database connection string (use the connection string section of the app settings or in the Azure portal). |
 
 An wait and retry policy with exponential back off is used when connecting to external services such as the dataverse API. for more information on retry policies visit the [Polly wait and retry documentation][3].
+
+## Entering the Tables (entities) to Synchronize
+
+When the service runs for the first time it will create all the tables it needs to store metadata.
+
+Open the table "SynchronizedTables" and enter the logical name of the desired dataverse tables. Enter 1 in the Enabled column.
+
+These settings can be changed at any time and will be applied the next time the function runs (next timer cycle).
 
 ## Questions and Answers
 

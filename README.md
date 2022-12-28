@@ -1,34 +1,38 @@
-# Dataverse Data Export Service
-This solution aims to provide similar data export capabilities to the ones  found in the [Microsoft Data Export Service (DES)][1] and therefore replaces the service which reached end-of-life in November 2022.
+This solution aims to provide an alternative to the [Microsoft Data Export Service (DES)][1] which reached end-of-life in November 2022.
+The database created by this service is fully compatible with the one from the deprecated Microsoft’s DES. To move your client (e.g.: Power BI) to the new database all you need is to swap your connection string.
 
-While the source code includes an implementation of the service as an Azure function and this document will be focused on that, one could potentially use the same concept to run it as a command line application, docker container, windows service and so on. The Azure function is just a wrapper to the service which is contained on a .net 6 class library project.
+![basic function app implementation](https://github.com/emerbrito/dataverse-data-export-service/blob/main/images/basic-functionapp-diagram.png)
 
-![basic azure function diagram](images/basic-functionapp-diagram.png)
+While the source code includes an implementation of this service as an Azure function and the documentation may be focusing on this implementation, the actual functionality is contained in its own .net 6 project making it possible to implement it as a command line tool, Windows service, docker container and so on.
 
-## Basic Concepts
+## How it works
 
-The service relies on the built in table (entity) change tracking capability to synchronize data. Change tracking allows the service to reliably retrieve only the changes between the last an current call to the dataverse api.
+The service uses the built-in table (entity) change tracking capability to synchronize data. Change tracking allows the service to reliably retrieve only the changes between the last and current call to the dataverse API.
+The following tasks are performed for each synchronized table (entity) every time the service runs:
 
-The service will automatically enable change tracking for the table (entity) being synchronized if it is not already done.
+1. Determine whether change tracking is enabled and if not, enable it.
+2.Create the SQL table if it not already exists or compare the schema of an existing table to most up to date metadata and update the SQL table if necessary (drop, create or update columns).
+3.Use the last data token (stored in the SQL database) to determine which data to synchronize. If there is no data token it is most likely the first call to the API and all data from the table will be copied.
+4.Store the current data token which will be used in the next call to the API.
 
-## Azure Function and Consumption Plans
+## Cloning the repo and running the service locally
 
-The Azure function implementation uses a timer trigger and the inteval can be set in the app configuration (details below).
+After cloning the repository, make sure entered the minimum required configuration before you run it locally (see the [Configuration](#configuration) for more details).
+For help running a function locally see the [Run the function locally][3] section of the "[Quickstart: Create your first C# function in Azure using Visual Studio][2]" guide.
 
-Things to keep in mind if running Azure functions on a consumption plan:
+## Deploying the Azure Function
 
-- The function will time out after 10 minutes. You want to keep your timer interval short enough to prevent a synchronization of large volumes of data that might go over 10 minutes.
-- The first time you run the function it may take a while to complete depending on the number of tables being synchronized and volume of data on each table. You may need a "non-consumption" plan to run the initial synchronization and, after that you can stop the function and move to a non-consumption plan. All metadata is stored in the database itself so it is ok to redeploy the function. As long as it is poiting to the same database it will start where the previous left off.
+After cloning the repository, you can run it locally by entering the minimum required configuration (see the configuration section for more details) 
 
-## Deploying and Configuring the Azure Function
+For help publishing an Azure function see [Publish the project to Azure][4] section of the "[Quickstart: Create your first C# function in Azure using Visual Studio][2]" guide.
 
-After creating your function app in the azure portal, make sure at least the required configuration keys (see below table) are applied before deploying the function.
+## Configuration
 
-For more  information on how to add settings to a function app, visit: [Manage your function app][4]
+If you need help using the portal to enter your application settings, see the section [Work with application settings][5] of the [Manage your function app][5] guide.
 
-Once the configuration is in place, clone this repository, deploy the function and it will start working with the specified values.
+While working locally, you can enter the same settings in your local.settins.json
 
-### Function App Settings
+### Application Settings
 
 | Key  | Description  |
 | ---- | ------------ |
@@ -42,26 +46,19 @@ Once the configuration is in place, clone this repository, deploy the function a
 | RetryLinearBackoffRetryCount | (Optional) Number of attempts made by the retry policy. Default is 6.
 | StoreConnectionString | (Required) The SQL database connection string (use the connection string section of the app settings or in the Azure portal). |
 
-An wait and retry policy with exponential back off is used when connecting to external services such as the dataverse API. for more information on retry policies visit the [Polly wait and retry documentation][3].
+### Initializing the SQL Database
 
-## Entering the Tables (entities) to Synchronize
+Every time the service runs it will make an attempt to initialize the database in case it is empty (have no tables at all).
 
-When the service runs for the first time it will create all the tables it needs to store metadata.
+### Synchronized Tables (Entities)
 
-Open the table "SynchronizedTables" and enter the logical name of the desired dataverse tables. Enter 1 in the Enabled column.
+To register Dataverse tables (entities) to for synchronization, open the SQL database and update the table "_SynchronizedTables".
+Enter the table (entity) logical name and "true" for the enabled column.
 
-These settings can be changed at any time and will be applied the next time the function runs (next timer cycle).
-
-## Questions and Answers
-
-**Q: How can I replace an existing Microsoft DES implementation**
-
-**A:** The database created by this custom service will match the schema of the one created y Microsoft DES. Implement this service and when the initial synchronization is complete just change the connection string of your clients (e.g.: Powert BI dashboards).
+![adding new tables for synchronization](https://github.com/emerbrito/dataverse-data-export-service/blob/main/images/add-new-tables.jpg)
 
 [1]: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/data-export-service
-[2]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer?tabs=in-process&pivots=programming-language-csharp#ncrontab-expressions
-[3]: https://github.com/Polly-Contrib/Polly.Contrib.WaitAndRetry
-[4]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings?tabs=portal
-
-
-
+[2]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-your-first-function-visual-studio
+[3]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-your-first-function-visual-studio?tabs=in-process#run-the-function-locally
+[4]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-your-first-function-visual-studio?tabs=in-process#publish-the-project-to-azure
+[5]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings?tabs=portal#settings

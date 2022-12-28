@@ -28,11 +28,12 @@ For help publishing an Azure function see [Publish the project to Azure][4] sect
 
 ## Configuration
 
-If you need help using the portal to enter your application settings, see the section [Work with application settings][5] of the [Manage your function app][5] guide.
+If you need help using the Azure portal to enter your application settings, see the section [Work with application settings][5] of the [Manage your function app][5] guide.
 
-While working locally, you can enter the same settings in your local.settins.json
+To work locally, you can copy the basic settings for your loca.settings.json from here: [Local Development Settings][6].
 
 ### Application Settings
+The following describes the available application settings.
 
 | Key  | Description  |
 | ---- | ------------ |
@@ -62,3 +63,4 @@ Enter the table (entity) logical name and "true" for the enabled column.
 [3]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-your-first-function-visual-studio?tabs=in-process#run-the-function-locally
 [4]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-your-first-function-visual-studio?tabs=in-process#publish-the-project-to-azure
 [5]: https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings?tabs=portal#settings
+[6]: https://github.com/emerbrito/dataverse-data-export-service/wiki/Local-Development-Settings

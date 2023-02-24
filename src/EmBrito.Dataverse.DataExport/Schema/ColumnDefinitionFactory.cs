@@ -141,10 +141,14 @@ namespace EmBrito.Dataverse.DataExport.Schema
 
         public static ColumnDefinition CreateString(string name, int maxLength, bool indexed = false)
         {
+
+            // if maxLength is between 1 and 400 we return the number of bytes which can be up to 8000,
+            // otherwise we return -1 which will result in an equivalent to nvarchar(max)
+
             var col = new ColumnDefinition
             {
                 Name = name,
-                MaxLength = maxLength * 2,
+                MaxLength = maxLength > 0 && maxLength < 4001 ? maxLength * 2 : -1,
                 Precision = 0,
                 Scale = 0,
                 TypeName = StringDataType,

@@ -103,7 +103,7 @@ namespace EmBrito.Dataverse.DataExport.Core
                 await strategy.ExecuteAsync(async () => 
                 {
 
-                    table = await GetTableByName(script.TableName, throwIfNotFound: true);
+                    table = await GetTableByName(script.LogicalName, throwIfNotFound: true);
                     job = await GetJobById(jobId);
 
                     using (var trans = await dataContext.Database.BeginTransactionAsync())
@@ -216,16 +216,16 @@ namespace EmBrito.Dataverse.DataExport.Core
             return job;
         }
 
-        async Task<SynchronizedTable?> GetTableByName(string tableName, bool throwIfNotFound = false)
+        async Task<SynchronizedTable?> GetTableByName(string logicalName, bool throwIfNotFound = false)
         {
             var table = await dataContext
                 .SynchronizedTables
-                .Where(x => x.LogicalName == tableName)
+                .Where(x => x.LogicalName == logicalName)
                 .FirstOrDefaultAsync();
 
             if (table is null && throwIfNotFound)
             {
-                throw new KeyNotFoundException($"Table {tableName} could not be found.");
+                throw new KeyNotFoundException($"Table {logicalName} could not be found.");
             }
 
             return table;

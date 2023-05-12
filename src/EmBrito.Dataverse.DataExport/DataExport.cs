@@ -65,7 +65,7 @@ namespace EmBrito.Dataverse.DataExport
             var blockOptions = new ExecutionDataflowBlockOptions
             {
                 EnsureOrdered = false,
-                MaxDegreeOfParallelism = client.RecommendedDegreesOfParallelism, 
+                MaxDegreeOfParallelism = 1, // client.RecommendedDegreesOfParallelism
                 CancellationToken = token
             };
             var parallelBlock = new ActionBlock<TableSetting>(async tableSetting =>
@@ -73,11 +73,11 @@ namespace EmBrito.Dataverse.DataExport
 
                 var dataContext = new DataContext(appOptions.StoreConnectionString, appOptions.SqlCommandTimeoutSeconds);
                 var storeService = new DataStoreService(dataContext, log);
-                var success = false;
+                (bool error, bool deleted) processSchemaResult = new();
 
                 try
                 {
-                    success = await ProcessTableSchema(tableSetting, jobId, tableSettings, storeService, metadataService, attributeFilters);
+                    processSchemaResult = await ProcessTableSchema(tableSetting, jobId, tableSettings, storeService, metadataService, attributeFilters);
                 }
                 catch (Exception ex)
                 {
@@ -93,7 +93,7 @@ namespace EmBrito.Dataverse.DataExport
                     }
                 }
 
-                if (!success) return;
+                if (processSchemaResult.error || processSchemaResult.deleted) return;
 
                 try
                 {
@@ -126,14 +126,14 @@ namespace EmBrito.Dataverse.DataExport
             await settings.CompleteJob(jobId);
         }
 
-        async Task<bool> ProcessTableSchema(TableSetting tableSetting, Guid jobId, TableSettingCollection tableSettings, DataStoreService storeService, DataverseMetadataService metadataService, IEnumerable<Predicate<AttributeMetadata>> attributeFilters)
+        async Task<(bool error, bool deleted)> ProcessTableSchema(TableSetting tableSetting, Guid jobId, TableSettingCollection tableSettings, DataStoreService storeService, DataverseMetadataService metadataService, IEnumerable<Predicate<AttributeMetadata>> attributeFilters)
         {
 
             log.LogInformation($"Processing table {tableSetting.LogicalName}.");
 
             var metadata = await metadataService.GetMetadata(tableSetting.LogicalName);
             TableDefinition? remoteDefinition = null;
-            var success = true;
+            var error = false;
 
             if (metadata is null)
             {
@@ -143,6 +143,9 @@ namespace EmBrito.Dataverse.DataExport
             {
                 log.LogTrace($"Metadata found. Instantiating table definition builder for {tableSetting.LogicalName}.");
                 var builder = TableDefinitionBuilder.WithMetadata(metadata);
+
+                if (!string.IsNullOrWhiteSpace(appOptions.TableNamePrefix)) builder.SetNamePrefix(appOptions.TableNamePrefix);
+                if (!string.IsNullOrWhiteSpace(appOptions.TableNameSufix)) builder.SetNameSufix(appOptions.TableNameSufix);
 
                 if (attributeFilters != null)
                 {
@@ -175,7 +178,7 @@ namespace EmBrito.Dataverse.DataExport
             {
                 log.LogInformation($"Table {tableSetting.LogicalName} has changed.");
                 var failedTables = await ApplySchemaChanges(changes, jobId, tableSetting, storeService);
-                success = failedTables.Count == 0;
+                error = failedTables.Count > 0;
             }
             else
             {
@@ -192,7 +195,7 @@ namespace EmBrito.Dataverse.DataExport
                 }
                 catch (Exception ex)
                 {
-                    success = false;
+                    error = true;
                     var msg = $"Unexpected error updating change tracking for table {tableSetting.LogicalName}.";
                     log.LogError(ex, msg);
 
@@ -207,7 +210,7 @@ namespace EmBrito.Dataverse.DataExport
 
             }
 
-            return success;
+            return (error: error, deleted: changes.DeletedTables.Any());
         }
 
         async Task<List<string>> ApplySchemaChanges(SchemaComparer changes, Guid jobId, TableSetting tableSetting, DataStoreService storeService)

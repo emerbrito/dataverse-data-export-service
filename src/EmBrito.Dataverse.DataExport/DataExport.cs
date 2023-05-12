@@ -153,7 +153,12 @@ namespace EmBrito.Dataverse.DataExport
                 }
 
                 remoteDefinition = builder.BuildDefinitions();
-                remoteDefinition.Columns.AddAndSort(ColumnDefinitionFactory.CreateUniqueIdentifier("Id", indexed: true));
+
+                if(appOptions.EnableIdColumn)
+                {
+                    remoteDefinition.Columns.AddAndSort(ColumnDefinitionFactory.CreateUniqueIdentifier("Id", indexed: true));
+                }                
+
                 log.LogTrace($"Table definition built for {tableSetting.LogicalName}. Total columns: {remoteDefinition.Columns.Count}.");
             }
 

@@ -19,5 +19,6 @@ namespace EmBrito.Dataverse.DataExport.Core
         public string ScheduleCronExpression { get; set; } = "*/15 * * * *";
         public string TableNamePrefix { get; set; } = string.Empty;
         public string TableNameSufix { get; set; } = string.Empty;
+        public bool EnableIdColumn { get; set; } = true;
     }
 }

@@ -12,10 +12,11 @@ namespace EmBrito.Dataverse.DataExport.Scripts
         readonly private TableDefinition _tableDefinition;
         private readonly List<string> _description;
 
+        public string LogicalName { get => _tableDefinition.LogicalName; }
         public string Type { get; private set; }
         public IEnumerable<string> Description { get => _description; }
         public TableDefinition TableDefinition { get => _tableDefinition;  }
-        public string TableName { get => _tableDefinition.Name;  }
+        public string TableName { get => _tableDefinition.Name;  }        
         public string Script { get; set; }
 
         public SqlScript(string type, string script, TableDefinition tableDefinition)

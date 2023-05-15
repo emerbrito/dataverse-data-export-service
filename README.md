@@ -46,6 +46,9 @@ The following describes the available application settings.
 | RetryLinearBackoffInitialDelaySeconds | (Optional) The initial delay applied to the exponential back-off back off retry policy. Default is 30 seconds. |
 | RetryLinearBackoffRetryCount | (Optional) Number of attempts made by the retry policy. Default is 6.
 | StoreConnectionString | (Required) The SQL database connection string (use the connection string section of the app settings or in the Azure portal). |
+| TableNamePrefix | (Optional) A prefix applied to all table names. E.g.: if the Dataverse logical name is "account" and "TableNamePrefix" is set to "des_", the table will be created as "des_account".
+| TableNameSufix | (Optional) A sufix applied to all table names. E.g.: if the Dataverse logical name is "account" and "TableNameSufix" is set to "base", the table will be created as "accountbase".
+| EnableIdColumn | (Optional) An "Id" Column is introduced to every table to keep it backwards compatible with the [Microsoft Data Export Service (DES)][1] . The value of the "Id" column will always be the same of the primary key column. For example, in the account table the primary column "accountid" and "Id" column will have the same value. To disable this feature and prevent the Id column from being generated set this value to "false". Default is "true".
 
 ### Initializing the SQL Database
 

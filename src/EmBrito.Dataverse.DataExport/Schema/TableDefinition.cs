@@ -14,6 +14,8 @@ namespace EmBrito.Dataverse.DataExport.Schema
         [JsonInclude]
         public string Name { get; init; }
         [JsonInclude]
+        public string LogicalName { get; init; }
+        [JsonInclude]
         public string PrimaryIdAttribute { get; init; }
         [JsonInclude]
         public bool ChangeTrackingEnabled { get; internal set; }
@@ -24,13 +26,15 @@ namespace EmBrito.Dataverse.DataExport.Schema
         {
             // this constructtor is required by Syste.Text.Json for deserialization
             Name = String.Empty;
+            LogicalName = String.Empty;
             PrimaryIdAttribute = String.Empty;
             Columns = new ColumnDefinitionCollection();
         }
 
-        internal TableDefinition(string name, string primaryIdAttribute, bool changeTrackingEnabled, List<ColumnDefinition> columns)
+        internal TableDefinition(string name, string logicalName, string primaryIdAttribute, bool changeTrackingEnabled, List<ColumnDefinition> columns)
         {
             Name = name;
+            LogicalName = logicalName;
             PrimaryIdAttribute = primaryIdAttribute;
             ChangeTrackingEnabled= changeTrackingEnabled;
             Columns = columns != null ? new ColumnDefinitionCollection(columns) : new ColumnDefinitionCollection();

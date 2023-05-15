@@ -13,11 +13,15 @@ namespace EmBrito.Dataverse.DataExport.Schema
     {
         TableDefinition BuildDefinitions();
         IDefinitionBuilderConfig ExcludeAttributes(Predicate<AttributeMetadata> predicate);
+        void SetNamePrefix(string prefix);
+        public void SetNameSufix(string sufix);
     }
 
     public class TableDefinitionBuilder : IDefinitionBuilderConfig
     {
 
+        private string namePrefix = string.Empty;
+        private string nameSufix = string.Empty;
         private EntityMetadata _entityMetadata;
         private List<AttributeMetadata> _attributes;
         static Dictionary<AttributeTypeDisplayName, AttributeConverter> converters = new();
@@ -59,8 +63,9 @@ namespace EmBrito.Dataverse.DataExport.Schema
                     }
                 }
             }
-
+            
             var tableDef = new TableDefinition(
+                $"{(namePrefix ?? "")}{_entityMetadata.LogicalName}{(nameSufix ?? "")}", 
                 _entityMetadata.LogicalName, 
                 _entityMetadata.PrimaryIdAttribute, 
                 _entityMetadata.ChangeTrackingEnabled ?? false, 
@@ -73,6 +78,18 @@ namespace EmBrito.Dataverse.DataExport.Schema
         {
             _attributes.RemoveAll(predicate);
             return this;
+        }
+
+        public void SetNamePrefix(string prefix)
+        {
+            if(string.IsNullOrEmpty(prefix)) throw new ArgumentNullException(prefix);
+            namePrefix = prefix;
+        }
+
+        public void SetNameSufix(string sufix)
+        {
+            if (string.IsNullOrEmpty(sufix)) throw new ArgumentNullException(sufix);
+            nameSufix = sufix;
         }
 
         static void RegisterConverters()
